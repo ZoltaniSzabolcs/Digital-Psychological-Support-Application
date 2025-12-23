@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\JournalController;
 use App\Http\Controllers\MoodController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
@@ -29,5 +30,11 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/mood', [MoodController::class, 'store'])->name('mood.store');
 });
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/journal', [JournalController::class, 'index'])->name('journal');
+    Route::post('/journal', [JournalController::class, 'store'])->name('journal.store');
+});
+
 
 require __DIR__ . '/auth.php';

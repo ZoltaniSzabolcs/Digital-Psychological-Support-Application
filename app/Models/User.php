@@ -31,6 +31,11 @@ class User extends Authenticatable
         return $this->hasMany(Mood::class);
     }
 
+    public function journals()
+    {
+        return $this->hasMany(Journal::class);
+    }
+
     public function psychologist() {
         return $this->belongsTo(User::class, 'assigned_psychologist_id');
     }
