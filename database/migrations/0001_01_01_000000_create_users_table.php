@@ -17,8 +17,15 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->enum('role', ['patient', 'psychologist', 'admin'])->default('patient');
+            $table->unsignedBigInteger('assigned_psychologist_id')->nullable()->after('role');
+            $table->foreign('assigned_psychologist_id')
+                ->references('id')
+                ->on('users')
+                ->onDelete('set null'); // If the psychologist is deleted, keep the patient but clear the link
             $table->rememberToken();
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

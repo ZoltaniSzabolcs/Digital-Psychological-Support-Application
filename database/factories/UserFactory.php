@@ -28,6 +28,7 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
+            'role' => 'patient',
             'remember_token' => Str::random(10),
         ];
     }
@@ -39,6 +40,22 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    // State for Psychologist
+    public function psychologist()
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'psychologist',
+        ]);
+    }
+
+    // State for Admin
+    public function admin()
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'admin',
         ]);
     }
 }
