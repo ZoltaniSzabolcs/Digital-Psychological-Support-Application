@@ -3,6 +3,7 @@
 use App\Http\Controllers\JournalController;
 use App\Http\Controllers\MoodController;
 use App\Http\Controllers\ProfileController;
+use App\Models\User;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -20,7 +21,7 @@ Route::get('/', function () {
 Route::get('/dashboard', function (Request $request) {
     return Inertia::render('Dashboard', [
         // Check if a mood entry exists for the current user created 'today'
-        'hasLoggedToday' => $request->user()
+        'hasLoggedToday' => User::find($request->user()->id)
             ->moods()
             ->whereDate('created_at', now())
             ->exists()
