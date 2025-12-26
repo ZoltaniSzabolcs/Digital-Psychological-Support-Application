@@ -24,6 +24,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'assigned_psychologist_id',
     ];
 
     // If User is a Patient

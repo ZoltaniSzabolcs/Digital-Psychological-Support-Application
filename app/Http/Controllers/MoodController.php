@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\CrisisAlertMail;
 use App\Models\Alert;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redirect;
 
 class MoodController extends Controller
@@ -56,13 +60,14 @@ class MoodController extends Controller
     }
 
     /**
-     * Create an Alert in the database for the psychologist.
+     * Create an Alert AND Send Email
      */
     private function triggerCrisisAlert($patient, $entry)
     {
-        // Only create an alert if the patient actually has a psychologist assigned
         if ($patient->assigned_psychologist_id) {
-            Alert::create([
+
+            // 1. Create the Database Record
+            $alert = Alert::create([
                 'patient_id' => $patient->id,
                 'psychologist_id' => $patient->assigned_psychologist_id,
                 'severity' => 'critical',
@@ -72,8 +77,20 @@ class MoodController extends Controller
                 'is_resolved' => false,
             ]);
 
-            // TODO: In a real production app, you would fire a Notification/Email event here.
-            // Notification::send($patient->psychologist, new CrisisAlertNotification($entry));
+            // 2. Fetch the Psychologist User Object to get email
+            // We assume the relationship $patient->psychologist exists,
+            // but fetching manually ensures we have the object even if the relationship isn't loaded.
+            $psychologist = User::find($patient->assigned_psychologist_id);
+
+            // 3. Send the Email
+            if ($psychologist && $psychologist->email) {
+                try {
+                    Mail::to($psychologist->email)->send(new CrisisAlertMail($alert, $patient));
+                } catch (\Exception $e) {
+                    // Log the error so the app doesn't crash if email fails
+                    Log::error("Failed to send crisis email to {$psychologist->email}: " . $e->getMessage());
+                }
+            }
         }
     }
 

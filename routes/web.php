@@ -18,15 +18,45 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', function (Request $request) {
-    return Inertia::render('Dashboard', [
-        // Check if a mood entry exists for the current user created 'today'
-        'hasLoggedToday' => User::find($request->user()->id)
-            ->moods()
-            ->whereDate('created_at', now())
-            ->exists()
-    ]);
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::middleware(['auth', 'verified'])->group(function () {
+
+    // 1. Update GET Dashboard
+    Route::get('/dashboard', function (Request $request) {
+        return Inertia::render('Dashboard', [
+            'hasLoggedToday' => User::find($request->user()->id)
+                ->moods()
+                ->whereDate('created_at', now())
+                ->exists(),
+
+            // Pass the list of psychologists
+            'availablePsychologists' => User::where('role', 'psychologist')
+                ->select('id', 'name', 'email')
+                ->get(),
+
+            // Pass the current selection
+            'currentPsychologistId' => $request->user()->assigned_psychologist_id
+        ]);
+    })->name('dashboard');
+
+    // 2. Add PUT Route to save the psychologist
+    Route::put('/user/psychologist', function (Request $request) {
+        $validated = $request->validate([
+            'psychologist_id' => 'required|exists:users,id'
+        ]);
+
+        \Illuminate\Support\Facades\Log::info(User::find($request->user()->id)->assigned_psychologist_id);
+
+        // Update the logged-in user
+        User::find($request->user()->id)->update([
+            'assigned_psychologist_id' => $validated['psychologist_id']
+        ]);
+
+        \Illuminate\Support\Facades\Log::info(User::find($request->user()->id)->assigned_psychologist_id);
+
+        return redirect()->back()->with('success', 'Specialist assigned successfully.');
+    })->name('user.assign_psychologist');
+
+});
 
 Route::get('/journal', function () {
     return Inertia::render('Journal');
