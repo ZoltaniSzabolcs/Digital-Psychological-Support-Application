@@ -16,6 +16,7 @@ class JournalController extends Controller
         return Inertia::render('Journal', [
             'entries' => auth()->user()
                 ->journals()
+                ->with('media')
                 ->latest()
                 ->get()
                 ->map(fn($entry) => [
@@ -23,6 +24,7 @@ class JournalController extends Controller
                     'content' => $entry->content,
                     'visibility' => $entry->visibility,
                     'created_at' => $entry->created_at->toDateTimeString(),
+                    'audio_url' => $entry->getFirstMediaUrl('voice_entries'),
                 ]),
         ]);
     }
@@ -33,15 +35,21 @@ class JournalController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'content' => 'required|string|max:5000',
+            'content' => 'nullable|string|max:5000',
             'visibility' => 'required|in:private,shared',
+            'audio' => 'nullable|file|mimes:webm,mp3,wav,ogg|max:10240', // Max 10MB
         ]);
 
-        auth()->user()->journals()->create([
-            'type' => 'text',
-            'content' => $validated['content'],
+        $journal = auth()->user()->journals()->create([
+            'type' => $request->hasFile('audio') ? 'audio' : 'text',
+            'content' => $validated['content'] ?? 'Voice Entry',
             'visibility' => $validated['visibility'],
         ]);
+
+        if ($request->hasFile('audio')) {
+            $journal->addMediaFromRequest('audio')
+                ->toMediaCollection('voice_entries');
+        }
 
         return redirect()->back()->with('success', 'Journal entry saved.');
     }
