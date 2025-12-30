@@ -3,6 +3,8 @@
 use App\Http\Controllers\JournalController;
 use App\Http\Controllers\MoodController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PsychologistController;
+use App\Http\Middleware\EnsureUserIsPsychologist;
 use App\Models\Mood;
 use App\Models\User;
 use Illuminate\Foundation\Application;
@@ -21,8 +23,14 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // 1. Update GET Dashboard
+    // ==========================================
+    // 1. SHARED / REDIRECT LOGIC
+    // ==========================================
     Route::get('/dashboard', function (Request $request) {
+        // Redirect psychologists to their dashboard
+        if ($request->user()->role === 'psychologist') {
+            return redirect()->route('psychologist.dashboard');
+    }
         return Inertia::render('Dashboard', [
             'hasLoggedToday' => User::find($request->user()->id)
                 ->moods()
@@ -39,20 +47,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->name('dashboard');
 
-    // 2. Add PUT Route to save the psychologist
+    // ==========================================
+    // 2. PATIENT ROUTES
+    // ==========================================
     Route::put('/user/psychologist', function (Request $request) {
         $validated = $request->validate([
             'psychologist_id' => 'required|exists:users,id'
         ]);
 
-        \Illuminate\Support\Facades\Log::info(User::find($request->user()->id)->assigned_psychologist_id);
-
         // Update the logged-in user
         User::find($request->user()->id)->update([
             'assigned_psychologist_id' => $validated['psychologist_id']
         ]);
-
-        \Illuminate\Support\Facades\Log::info(User::find($request->user()->id)->assigned_psychologist_id);
 
         return redirect()->back()->with('success', 'Specialist assigned successfully.');
     })->name('user.assign_psychologist');
@@ -87,6 +93,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'recent_entries' => $history->sortByDesc('created_at')->take(5)->values()
         ]);
     })->name('insights');
+
+    // ==========================================
+    // 3. PSYCHOLOGIST ROUTES (Protected Group)
+    // ==========================================
+    Route::middleware(['auth', 'verified', EnsureUserIsPsychologist::class]) // <--- Use Class, not Function
+    ->prefix('psychologist')
+        ->name('psychologist.')
+        ->group(function () {
+            Route::get('/dashboard', [PsychologistController::class, 'index'])->name('dashboard');
+            Route::get('/patient/{id}', [PsychologistController::class, 'show'])->name('patient.show');
+        });
 });
 
 Route::get('/journal', function () {
