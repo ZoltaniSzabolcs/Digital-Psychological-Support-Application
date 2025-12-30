@@ -7,6 +7,7 @@ use App\Models\Invoice;
 use App\Models\Mood;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Carbon\Carbon;
 
 class DatabaseSeeder extends Seeder
 {
@@ -15,7 +16,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Create specific Login Accounts (for you to test)
+        // 1. Create specific Login Accounts
         $admin = User::factory()->admin()->create([
             'email' => 'admin@clinic.ro',
             'name'  => 'System Administrator'
@@ -33,19 +34,21 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // 2. Generate Data for the Main Patient (Maria)
-        // Create 30 days of mood history
-        Mood::factory()->count(25)->create(['user_id' => $patient->id]);
+        // Loop back 30 days to create a consistent history graph
+        $this->seedDailyMoods($patient, 30);
 
-        // Create a Crisis Event for Maria
-        Mood::factory()->crisis()->create(['user_id' => $patient->id]);
+        // Create a Crisis Event for Maria (Today)
+        Mood::factory()->crisis()->create([
+            'user_id' => $patient->id,
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
 
-        // Create Appointments for Maria
+        // Create Appointments & Invoices
         Appointment::factory()->count(3)->create([
             'patient_id' => $patient->id,
             'psychologist_id' => $psychologist->id
         ]);
-
-        // Create Invoices for Maria
         Invoice::factory()->count(2)->create(['user_id' => $patient->id]);
 
 
@@ -57,8 +60,8 @@ class DatabaseSeeder extends Seeder
                 'assigned_psychologist_id' => $psych->id
             ])->each(function ($p) use ($psych) {
 
-                // For each random patient, create mood entries
-                Mood::factory()->count(10)->create(['user_id' => $p->id]);
+                // For each bulk patient, seed 14 days of history
+                $this->seedDailyMoods($p, 14);
 
                 // Create random appointments
                 Appointment::factory()->count(2)->create([
@@ -67,5 +70,24 @@ class DatabaseSeeder extends Seeder
                 ]);
             });
         });
+    }
+
+    /**
+     * Helper function to seed sequential daily moods
+     */
+    private function seedDailyMoods(User $user, int $daysBack)
+    {
+        for ($i = $daysBack; $i > 0; $i--) {
+            // Calculate the specific date
+            $date = Carbon::now()->subDays($i);
+
+            Mood::factory()->create([
+                'user_id' => $user->id,
+                'created_at' => $date,
+                'updated_at' => $date,
+                // Optional: ensure score varies slightly to make graph look real
+                // The Factory logic likely handles random scores, so we trust it there.
+            ]);
+        }
     }
 }
