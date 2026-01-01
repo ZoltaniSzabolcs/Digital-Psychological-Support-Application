@@ -49,6 +49,12 @@ const showingNavigationDropdown = ref(false);
                                 >
                                     Insights
                                 </NavLink>
+                                <NavLink
+                                    :href="route('chat.directory')"
+                                    :active="route().current('chat.directory')"
+                                >
+                                    Chat
+                                </NavLink>
                             </div>
                         </div>
 
@@ -167,6 +173,12 @@ const showingNavigationDropdown = ref(false);
                             :active="route().current('insights')"
                         >
                             Insights
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('chat.directory')"
+                            :active="route().current('chat.directory')"
+                        >
+                            Chat
                         </ResponsiveNavLink>
                     </div>
 
