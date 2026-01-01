@@ -1,5 +1,7 @@
 <?php
 
+
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\JournalController;
 use App\Http\Controllers\MoodController;
 use App\Http\Controllers\ProfileController;
@@ -30,7 +32,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Redirect psychologists to their dashboard
         if ($request->user()->role === 'psychologist') {
             return redirect()->route('psychologist.dashboard');
-    }
+        }
+        if ($request->user()->role === 'admin') {
+            return redirect()->route('admin.users.index');
+        }
         return Inertia::render('Dashboard', [
             'hasLoggedToday' => User::find($request->user()->id)
                 ->moods()
@@ -115,6 +120,12 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/mood', [MoodController::class, 'store'])->name('mood.store');
+});
+
+Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
