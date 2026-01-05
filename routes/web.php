@@ -4,6 +4,7 @@
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ChatDirectoryController;
 use App\Http\Controllers\JournalController;
+use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MoodController;
 use App\Http\Controllers\ProfileController;
@@ -139,6 +140,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/chat/directory', [ChatDirectoryController::class, 'index'])->name('chat.directory');
     Route::get('/chat/{userId}', [MessageController::class, 'show'])->name('chat.show');
     Route::post('/chat/{userId}', [MessageController::class, 'store'])->name('chat.store');
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/materials', [MaterialController::class, 'index'])
+        ->name('materials.index');
+
+    Route::post('/materials', [MaterialController::class, 'store'])
+        ->name('materials.store');
 });
 
 
