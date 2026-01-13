@@ -61,6 +61,18 @@ const showingNavigationDropdown = ref(false);
                                 >
                                     Materials
                                 </NavLink>
+                                <NavLink
+                                    v-if="
+                                        $page.props.auth.user.role ===
+                                        'psychologist'
+                                    "
+                                    :href="route('professional.library')"
+                                    :active="
+                                        route().current('professional.library')
+                                    "
+                                >
+                                    Professional Library
+                                </NavLink>
                             </div>
                         </div>
 
@@ -191,6 +203,13 @@ const showingNavigationDropdown = ref(false);
                             :active="route().current('materials.*')"
                         >
                             Materials
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            v-if="$page.props.auth.user.role === 'psychologist'"
+                            :href="route('professional.library')"
+                            :active="route().current('professional.library')"
+                        >
+                            Professional Library
                         </ResponsiveNavLink>
                     </div>
 

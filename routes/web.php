@@ -7,6 +7,7 @@ use App\Http\Controllers\JournalController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MoodController;
+use App\Http\Controllers\ProfessionalResourceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PsychologistController;
 use App\Http\Middleware\EnsureUserIsPsychologist;
@@ -150,6 +151,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('materials.store');
 });
 
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/professional-library', [ProfessionalResourceController::class, 'index'])
+        ->name('professional.library');
 
+    Route::post('/professional-library', [ProfessionalResourceController::class, 'store'])
+        ->name('professional.library.store');
+});
 
 require __DIR__ . '/auth.php';
